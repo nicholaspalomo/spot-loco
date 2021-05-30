@@ -211,7 +211,7 @@ class VectorizedEnvironment {
   // int getStudentObDim() { return environments_[0]->getStudentObDim(); }
   // int getTimeSeriesLen() { return environments_[0]->getTimeSeriesLen(); }
   // int getPartialObsDim() { return environments_[0]->getPartialObsDim(); }
-  // int getExtrasDim() { return environments_[0]->getExtrasDim(); }
+  int getExtrasDim() { return environments_[0]->getExtrasDim(); }
   int getActionDim() { return actionDim_; }
   // int getExtraInfoDim() { return extraInfoDim_; }
   int getNumOfEnvs() { return num_envs_; }

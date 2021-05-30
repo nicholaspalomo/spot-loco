@@ -33,7 +33,7 @@ PYBIND11_MODULE(_raisim_gym, m) {
     .def("startRecordingVideo", &VectorizedEnvironment<ENVIRONMENT>::startRecordingVideo)
     .def("stopRecordingVideo", &VectorizedEnvironment<ENVIRONMENT>::stopRecordingVideo)
     .def("showWindow", &VectorizedEnvironment<ENVIRONMENT>::showWindow)
-    .def("hideWindow", &VectorizedEnvironment<ENVIRONMENT>::hideWindow);
+    .def("hideWindow", &VectorizedEnvironment<ENVIRONMENT>::hideWindow)
     // .def("curriculumUpdate", &VectorizedEnvironment<ENVIRONMENT>::curriculumUpdate)
 
     // .def("getStudentObDim", &VectorizedEnvironment<ENVIRONMENT>::getStudentObDim)
@@ -42,8 +42,8 @@ PYBIND11_MODULE(_raisim_gym, m) {
     // .def("observeStudent", &VectorizedEnvironment<ENVIRONMENT>::observeStudent)
     // .def("getGaitString", &VectorizedEnvironment<ENVIRONMENT>::getGaitString)
     // .def("setGaitString", &VectorizedEnvironment<ENVIRONMENT>::setGaitString)
-    // .def("getExtraInfo", &VectorizedEnvironment<ENVIRONMENT>::getExtraInfo)
-    // .def("getExtrasDim", &VectorizedEnvironment<ENVIRONMENT>::getExtrasDim)
+    .def("getExtraInfo", &VectorizedEnvironment<ENVIRONMENT>::getExtraInfo)
+    .def("getExtrasDim", &VectorizedEnvironment<ENVIRONMENT>::getExtrasDim);
     // .def("setTargetVelocity", &VectorizedEnvironment<ENVIRONMENT>::setTargetVelocity);
 
 }

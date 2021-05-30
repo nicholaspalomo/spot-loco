@@ -12,6 +12,8 @@ import raisim_gym.algo.ppo_torch.module as ppo_module
 import raisim_gym.algo.ppo_torch.ppo as PPO
 import raisim_gym.algo.ppo_torch.rnnppo as RNNPPO
 
+import numpy as np
+from matplotlib import pyplot as plt
 import math
 import torch
 import torch.nn as nn
@@ -105,11 +107,15 @@ def plot(max_time, controller, env, cfg, save_dir):
     ctrl_callback = controller.noiseless_action
     observe_callback = env.observe
 
+    # specify buffers for the plot values
+    extras = np.zeros((1, env.num_extras, int(num_steps)))
+
     env.show_window()
     env.reset()
     env.start_recording_video(save_dir + "/spot.mp4")
 
     for i in range(int(num_steps)):
+        extras[0, :, i] = env.get_extras()
 
         state = observe_callback(False)
 
@@ -119,6 +125,100 @@ def plot(max_time, controller, env, cfg, save_dir):
 
     env.hide_window()
     env.stop_recording_video()
+
+    # make the graphs...
+    time = np.linspace(0., max_time, num=int(num_steps), endpoint=True)
+
+    # velocity tracking
+    start_idx = 0 # target velocity, 3: bodyLinVel_, 6: bodyAngularVel_
+
+    fig = plt.figure()
+    ax = fig.add_subplot(1,1,1)
+    ax.set(xlabel = 'Time [s]', ylabel='Body Velocity')
+    ax.grid()
+
+    ax.plot(time, extras[0, start_idx, :]) # x
+    ax.plot(time, extras[0, start_idx+3, :])
+    ax.plot(time, extras[0, start_idx+1, :]) # y
+    ax.plot(time, extras[0, start_idx+1+3, :])
+    ax.plot(time, extras[0, start_idx+2, :]) # r
+    ax.plot(time, extras[0, start_idx+3+3+2, :])
+    ax.legend(['$x_{target}$ [m/s]', 'x [m/s]', '$y_{target}$ [m/s]', 'y [m/s]', '$r_{target}$ [rad/s]', 'r [rad/s]'], ncol=2, bbox_to_anchor=(0.75,-0.25))
+    fig.tight_layout()
+    fig.savefig(save_dir + '/body_velocity.png', bbox_inches='tight')
+    plt.close(fig)
+
+    # gait following
+    start_idx = 3 + 3 + 3
+
+    fig, ax = plt.subplots(nrows=2, ncols=1)
+    ax[0].set(xlabel = '', ylabel='Contact state')
+    ax[1].set(xlabel = 'Time [s]', ylabel='Gait error')
+    ax[1].grid()
+
+    color = ['red', 'green', 'blue', 'orange', 'black']
+    for i in range(4):
+        for t in range(time.shape[0]):
+            if extras[0, start_idx+4+i, t] > 0.: # contact state
+                ax[0].vlines(t * cfg["environment"]["control_dt"], i, i+1, colors=color[i], alpha=0.5)
+            if extras[0, start_idx+8+i, t] > 0.: # target contact state
+                ax[0].vlines(t * cfg["environment"]["control_dt"], i, i+1, colors=color[-1], alpha=0.5)
+        ax[1].plot(time, extras[0,start_idx+i,:], color=color[i])
+        
+    ax[0].set_yticklabels([])
+    ax[0].set_xticklabels([])
+
+    ax[1].legend(["LF", "RF", "LH", "RH"], ncol=4, bbox_to_anchor=(0.75,-0.25))
+    leg = ax[1].get_legend()
+    for i in range(4):
+        leg.legendHandles[i].set_color(color[i])
+
+    fig.tight_layout()
+    fig.savefig(save_dir + '/gait_following.png', bbox_inches='tight')
+    plt.close(fig)
+
+    # target following BEV
+
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
+    ax.set(xlabel = 'Position x [m]', ylabel='Position y [m]')
+    ax.grid()
+
+    for t in range(time.shape[0]):
+        if t % 20 == 0:
+            # target velocity, x-y
+            target_vel = extras[0, 0:2, t]
+            x = extras[0, 3*3 + 4*5, t]
+            y = extras[0, 3*3 + 4*5 + 1, t]
+            origin = np.array([[x], [y]])
+            ax.quiver(*origin, target_vel[0], target_vel[1], color='c', scale=5, alpha=0.3, edgecolors='r', headwidth=2, headlength=4, width=0.004)
+
+            # target velocity, yaw
+            target_yaw = extras[0, 2, t]
+            if target_yaw >= 0:
+                ax.scatter(x, y, color='m', marker='o', s=250 * target_yaw, alpha=0.3)
+            else:
+                ax.scatter(x, y, color='m', marker='x', s=250 * -target_yaw, alpha=0.3)
+
+            # current velocity, x-y
+            curr_vel = extras[0, 3:5, t]
+            ax.quiver(*origin, curr_vel[0], curr_vel[1], color='c', scale=5, headwidth=2, headlength=4, width=0.004)
+
+            # current velocity, yaw
+            curr_yaw = extras[0, 8, t]
+            if curr_yaw >= 0:
+                ax.scatter(x, y, color='m', marker='o', s=250 * curr_yaw)
+            else:
+                ax.scatter(x, y, color='m', marker='x', s=250 * -curr_yaw)
+
+        for i in range(4):
+            if extras[0, 3*3 + 4 + i, t] > 0:
+                ax.scatter(extras[0, 3*3 + 4*3 + i, t], extras[0, 3*3 + 4*3 + 1 + i, t], color=color[i], marker='o', s=20) # current contact state
+            if extras[0, 3*3 + i, t] > 0:
+                ax.scatter(extras[0, 3*3 + 4*3 + i, t], extras[0, 3*3 + 4*3 + i, t], color=color[i], alpha=0.3, marker='o', s=20) # desired contact state
+
+    fig.savefig(save_dir + '/foot_position_xy.png', bbox_inches='tight')
+    plt.close(fig)
 
 def save_to_torchscript(actor, num_obs):
 
@@ -136,7 +236,7 @@ def save_to_torchscript(actor, num_obs):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--plot", type=bool, help="create plots? true or false", default=False)
+    parser.add_argument("--plot", type=bool, help="create plots? true or false", default=True)
     parser.add_argument("--max_time", type=int, help="maximum time length of policy rollout", default=10)
     parser.add_argument("--torchscript", type=bool, help="serialize controller to torchscript file for inferencing in C++", default=False)
     

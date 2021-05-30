@@ -65,6 +65,9 @@ class ENVIRONMENT : public RaisimGymEnv {
     /// this is nominal configuration of spot (FL, FR, RL, RR)
     gc_init_ << 0, 0, heightMap_->getHeight(0., 0.) + 0.2 + 0.54, 1.0, 0.0, 0.0, 0.0, -0.1, 1.10, -1.90, 0.1, 1.10, -1.90, -0.1, 1.10, -1.90, 0.1, 1.10, -1.90;
 
+    extraPlotDim_ = 3 + 3 + 3 + 4 + 4 + 4 + 4 + 4 + 2;
+    extraInfo_.setZero(extraPlotDim_);
+
     /// set pd gains
     Eigen::VectorXd jointPgain(gvDim_), jointDgain(gvDim_);
     jointPgain.setZero(); jointPgain.tail(nJoints_).setConstant(40.0);
@@ -666,6 +669,34 @@ class ENVIRONMENT : public RaisimGymEnv {
   void close() final {
   }
 
+  int getExtrasDim() { return extraPlotDim_; }
+
+  void getExtraInfo(Eigen::Ref<EigenVec> extraInfo) {
+    // data to pass to the Python side for making graphs
+    int pos = 0;
+    extraInfo_.segment(pos, 3) = targetVelocity_; pos += 3;
+    extraInfo_.segment(pos, 3) = bodyLinearVel_; pos += 3;
+    extraInfo_.segment(pos, 3) = bodyAngularVel_; pos += 3;
+
+    raisim::Vec<3> position;
+    for(int i = 0; i < 4; i++){
+      extraInfo_[pos+i] = float(gaitParams_.desiredContactStates[i]) - float(gaitParams_.footContactStates[i]);
+      extraInfo_[pos+4+i] = gaitParams_.footContactStates[i];
+      extraInfo_[pos+8+i] = gaitParams_.desiredContactStates[i];
+
+      auto frame = spot_->getFrameByName(gaitParams_.eeFrameNames[i]);
+      spot_->getFramePosition(frame, position);
+      extraInfo_[pos+12+i] = position[0];
+      extraInfo_[pos+16+i] = position[1];
+    }
+    pos += 20;
+
+    extraInfo_[pos++] = gc_[0];
+    extraInfo_[pos++] = gc_[1];
+
+    extraInfo = extraInfo_.cast<float>();
+  }
+
   inline double sampleUniform(double lower, double upper) {
     return lower + uniformDist_(randNumGen_) * (upper - lower);
   }
@@ -692,7 +723,7 @@ class ENVIRONMENT : public RaisimGymEnv {
   }
 
  private:
-  int gcDim_, gvDim_, nJoints_;
+  int gcDim_, gvDim_, nJoints_, extraPlotDim_;
   bool visualizable_ = false;
   std::normal_distribution<double> distribution_;
   raisim::ArticulatedSystem* spot_;
@@ -743,7 +774,7 @@ class ENVIRONMENT : public RaisimGymEnv {
   raisim::TerrainProperties terrainProperties_;
   raisim::HeightMap* heightMap_;
 
-  Eigen::VectorXd genForce_, pGain_, iGain_, dGain_, errCurr_, errPrev_, errInt_;
+  Eigen::VectorXd genForce_, pGain_, iGain_, dGain_, errCurr_, errPrev_, errInt_, extraInfo_;
 
 };
 

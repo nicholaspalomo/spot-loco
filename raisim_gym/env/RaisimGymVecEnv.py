@@ -74,7 +74,7 @@ class RaisimGymVecEnv(VecEnv):
         self.rwd_rms = RunningMeanStd(shape=[])
         self.clip_obs = clip_obs
 
-        self.num_extras = 0 # self.wrapper.getExtrasDim()
+        self.num_extras = self.wrapper.getExtrasDim()
         self._extra_plots = np.zeros([self.num_envs, self.num_extras], dtype=np.float32)
 
         self._target_velocity = np.zeros([self.num_envs, 3], dtype=np.float32) # target velocity as [x, y, yaw]
