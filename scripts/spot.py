@@ -184,28 +184,29 @@ def plot(max_time, controller, env, cfg, save_dir):
     ax.set(xlabel = 'Position x [m]', ylabel='Position y [m]')
     ax.grid()
 
+    start_idx = 3*3 + 4*3
     for t in range(time.shape[0]):
         if t % 20 == 0:
             # target velocity, x-y
-            target_vel = extras[0, 0:2, t]
-            x = extras[0, 3*3 + 4*5, t]
-            y = extras[0, 3*3 + 4*5 + 1, t]
+            target_vel = extras[0, start_idx + 8 + 2:start_idx + 8 + 2 + 2, t]
+            x = extras[0, start_idx + 8, t]
+            y = extras[0, start_idx + 8 + 1, t]
             origin = np.array([[x], [y]])
             ax.quiver(*origin, target_vel[0], target_vel[1], color='c', scale=5, alpha=0.3, edgecolors='r', headwidth=2, headlength=4, width=0.004)
 
             # target velocity, yaw
-            target_yaw = extras[0, 2, t]
+            target_yaw = extras[0, start_idx + 8 + 2 + 2, t]
             if target_yaw >= 0:
                 ax.scatter(x, y, color='m', marker='o', s=250 * target_yaw, alpha=0.3)
             else:
                 ax.scatter(x, y, color='m', marker='x', s=250 * -target_yaw, alpha=0.3)
 
             # current velocity, x-y
-            curr_vel = extras[0, 3:5, t]
+            curr_vel = extras[0, start_idx + 8 + 2 + 3:start_idx + 8 + 2 + 3 + 2, t]
             ax.quiver(*origin, curr_vel[0], curr_vel[1], color='c', scale=5, headwidth=2, headlength=4, width=0.004)
 
             # current velocity, yaw
-            curr_yaw = extras[0, 8, t]
+            curr_yaw = extras[0, start_idx + 8 + 2 + 3 + 2, t]
             if curr_yaw >= 0:
                 ax.scatter(x, y, color='m', marker='o', s=250 * curr_yaw)
             else:
@@ -219,6 +220,14 @@ def plot(max_time, controller, env, cfg, save_dir):
 
     fig.savefig(save_dir + '/foot_position_xy.png', bbox_inches='tight')
     plt.close(fig)
+
+    # average velocity error
+    print("average x-direction velocity error: {}".format(np.mean(extras[0, 0, :] - extras[0, 3, :])))
+    print("average y-direction velocity error: {}".format(np.mean(extras[0, 1, :] - extras[0, 4, :])))
+    print("average y-direction velocity error: {}".format(np.mean(extras[0, 2, :] - extras[0, 8, :])))
+
+    # average % of time gait in phase
+    print("average percent time gait in phase: {}".format(np.count_nonzero(np.where(np.sum(abs(extras[0, 9:13, :]), axis=0) == 0)[0]) / time.shape[0] * 100.))
 
 def save_to_torchscript(actor, num_obs):
 

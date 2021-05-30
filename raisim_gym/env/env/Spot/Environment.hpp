@@ -65,7 +65,7 @@ class ENVIRONMENT : public RaisimGymEnv {
     /// this is nominal configuration of spot (FL, FR, RL, RR)
     gc_init_ << 0, 0, heightMap_->getHeight(0., 0.) + 0.2 + 0.54, 1.0, 0.0, 0.0, 0.0, -0.1, 1.10, -1.90, 0.1, 1.10, -1.90, -0.1, 1.10, -1.90, 0.1, 1.10, -1.90;
 
-    extraPlotDim_ = 3 + 3 + 3 + 4 + 4 + 4 + 4 + 4 + 2;
+    extraPlotDim_ = 3 + 3 + 3 + 4 + 4 + 4 + 4 + 4 + 2 + 3 + 3;
     extraInfo_.setZero(extraPlotDim_);
 
     /// set pd gains
@@ -675,24 +675,40 @@ class ENVIRONMENT : public RaisimGymEnv {
     // data to pass to the Python side for making graphs
     int pos = 0;
     extraInfo_.segment(pos, 3) = targetVelocity_; pos += 3;
-    extraInfo_.segment(pos, 3) = bodyLinearVel_; pos += 3;
-    extraInfo_.segment(pos, 3) = bodyAngularVel_; pos += 3;
+    extraInfo_.segment(pos, 3) = bodyLinearVel_; pos += 3; // 3
+    extraInfo_.segment(pos, 3) = bodyAngularVel_; pos += 3; // 6
 
     raisim::Vec<3> position;
     for(int i = 0; i < 4; i++){
-      extraInfo_[pos+i] = float(gaitParams_.desiredContactStates[i]) - float(gaitParams_.footContactStates[i]);
-      extraInfo_[pos+4+i] = gaitParams_.footContactStates[i];
-      extraInfo_[pos+8+i] = gaitParams_.desiredContactStates[i];
+      extraInfo_[pos+i] = float(gaitParams_.desiredContactStates[i]) - float(gaitParams_.footContactStates[i]); // 9
+      extraInfo_[pos+4+i] = gaitParams_.footContactStates[i]; // 13
+      extraInfo_[pos+8+i] = gaitParams_.desiredContactStates[i]; // 17
 
       auto frame = spot_->getFrameByName(gaitParams_.eeFrameNames[i]);
       spot_->getFramePosition(frame, position);
-      extraInfo_[pos+12+i] = position[0];
-      extraInfo_[pos+16+i] = position[1];
+      extraInfo_[pos+12+i] = position[0]; // 21
+      extraInfo_[pos+16+i] = position[1]; // 25
     }
     pos += 20;
 
-    extraInfo_[pos++] = gc_[0];
-    extraInfo_[pos++] = gc_[1];
+    // body position x-y
+    extraInfo_[pos++] = gc_[0]; // 29
+    extraInfo_[pos++] = gc_[1]; // 30
+
+    // target velocity (global frame)
+    Eigen::Vector3d linVelTar = targetVelocity_;
+    linVelTar[2] = 0;
+    Eigen::Vector3d angVelTar = targetVelocity_;
+    angVelTar[0] = 0;
+    angVelTar[1] = 0;
+    extraInfo_[pos++] = (Rb_.e() * linVelTar)[0]; // 31
+    extraInfo_[pos++] = (Rb_.e() * linVelTar)[1]; // 32
+    extraInfo_[pos++] = (Rb_.e() * angVelTar)[2]; // 33
+
+    // body velocity (global frame)
+    extraInfo_[pos++] = gv_[0]; // 34
+    extraInfo_[pos++] = gv_[1]; // 35
+    extraInfo_[pos++] = gv_[5]; // 36
 
     extraInfo = extraInfo_.cast<float>();
   }
