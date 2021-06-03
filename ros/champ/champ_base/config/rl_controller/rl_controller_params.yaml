@@ -1,0 +1,90 @@
+sim_dt: 0.004
+control_dt: 0.024 # 50 Hz
+p_gain: 100.0
+d_gain: 4.0
+obs_dim: 362 # number of states - MAKE SURE IT MATCHES STATE DIMENSION IN TRAINING ENVIRONMENT!
+acts_dim: 13 # number of actions
+n_joints: 12
+target_vel_lim_x: 1.0
+target_vel_lim_y: 0.5
+target_vel_lim_r: 0.7
+buffer_len: 10
+buffer_stride: 1
+net_name: "rl_controller.pt"
+
+imu:
+  topic_name: "vn100/imu_sim"
+  position: [0, 0, 0.2] # x, y, z
+  orientation: [0, 0, 1.57079632679] # r, p, y
+
+action_scaling:
+  action_mean:
+    haa: -0.1
+    hfe: 1.10
+    kfe: -1.90
+    gait_frequency: 0.
+  action_std:
+    haa: 0.6
+    hfe: 0.6
+    kfe: 0.6
+    gait_frequency: 0.1
+
+observation_scaling:
+  observation_mean:
+    base_height: 0.48
+    gravity_axis: 0.
+    joint_position:
+      haa: -0.1
+      hfe: 1.10
+      kfe: -1.90
+    body_lin_vel: 0.
+    body_ang_vel: 0.
+    joint_vel: 0.
+    target_vel:
+      x: 0.
+      y: 0.
+      r: 0.
+    action_hist: 0.
+    stride: 0.
+    swing_start: 0.
+    swing_duration: 0.
+    phase_time_left: 0.
+    foot_contact_state: 0.
+    desired_contact_state: 0.
+    ee_clearance: 0.
+    ee_target: 0.
+    body_vel_error: 0.
+  observation_std:
+    base_height: 0.12
+    gravity_axis: 0.7
+    joint_position:
+      haa: 1.
+      hfe: 1.
+      kfe: 1.
+    body_lin_vel: 2.
+    body_ang_vel: 4.
+    joint_vel: 10.
+    target_vel:
+      x: 1.0
+      y: 0.5
+      r: 0.7
+    action_hist: 1.
+    stride: 1.
+    swing_start: 1.
+    swing_duration: 1.
+    phase_time_left: 1.
+    foot_contact_state: 1.
+    desired_contact_state: 1.
+    ee_clearance: 0.2
+    ee_target: 0.2
+    body_vel_error: 1.
+
+gait_params:
+  stride: 0.8
+  max_foot_height: 0.17
+  swing_start: [0., 0.5, 0.5, 0.]
+  swing_duration: [0.5, 0.5, 0.5, 0.5]
+
+self_right_params:
+  automatic: false
+  model_name: $(arg robot_name)

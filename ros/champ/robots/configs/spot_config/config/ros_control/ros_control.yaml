@@ -1,0 +1,44 @@
+joint_states_controller:
+    type: joint_state_controller/JointStateController
+    publish_rate: 1000
+
+joint_group_position_controller:
+    type: custom_effort_controllers/JointGroupPositionController
+    joints:
+        - fl.hx
+        - fl.hy
+        - fl.kn
+        - fr.hx
+        - fr.hy
+        - fr.kn
+        - hl.hx
+        - hl.hy
+        - hl.kn
+        - hr.hx
+        - hr.hy
+        - hr.kn
+
+    front_left_hip_x  : 
+        pid: {p: 100., i: 0, d: 1.0}
+    front_left_hip_y  :
+        pid: {p: 100., i: 0, d: 1.0}
+    front_left_knee   : 
+        pid: {p: 100., i: 0, d: 1.0}
+    front_right_hip_x : 
+        pid: {p: 100., i: 0, d: 1.0}
+    front_right_hip_y : 
+        pid: {p: 100., i: 0, d: 1.0}
+    front_right_knee  :
+        pid: {p: 100., i: 0, d: 1.0}
+    rear_left_hip_x   :
+        pid: {p: 100., i: 0, d: 1.0}
+    rear_left_hip_y   :
+        pid: {p: 100., i: 0, d: 1.0}
+    rear_left_knee    :
+        pid: {p: 100., i: 0, d: 1.0}
+    rear_right_hip_x  :
+        pid: {p: 100., i: 0, d: 1.0}
+    rear_right_hip_y  :
+        pid: {p: 100., i: 0, d: 1.0}
+    rear_right_knee   :
+        pid: {p: 100., i: 0, d: 1.0}
